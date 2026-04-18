@@ -14,6 +14,7 @@ dotenv.config({ path: path.join(__dirname, '.env'), override: true });
 
 const app = express();
 app.use(express.json({ limit: '1mb' }));
+app.get('/', (req, res) => res.redirect('/shindan.html'));
 app.use(express.static(__dirname, { index: false }));
 
 // ==========================================================================
