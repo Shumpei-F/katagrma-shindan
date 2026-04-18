@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Environment
+.env
+
+# Runtime data
+data/
+*.log
+
+# macOS
+.DS_Store
+
+# Claude Code
+.claude/
+Claude.pdf
+
+# Intermediate build artifacts
+slide-*.jpg
+
+# Unrelated strategic docs (not part of shindan project)
+202604投資家全体定例会.pdf
+Beyond_SaaS_AI_Facility_OS.pptx
+KatagrMa_Beyond_SaaS_Blueprint.pptx
+KatagrMa_Childcare_OS.pptx
+katagrma_beyond_saas_plan_v*.md
+katagrma_beyond_saas_plan_v*.pdf

@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>保育経営診断｜KatagrMa</title>
+<meta name="description" content="保育施設の経営力を、AIが5分で診断します。535施設のデータに基づく本格診断。" />
+
+<!-- OGP -->
+<meta property="og:title" content="保育経営診断｜KatagrMa" />
+<meta property="og:description" content="あなたの施設の経営力を、AIが5分で診断します。" />
+<meta property="og:type" content="website" />
+<meta property="og:image" content="https://katagrma.jp/ogp.png" />
+<meta name="twitter:card" content="summary_large_image" />
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<style>
+  :root {
+    --color-lime: #A5B830;
+    --color-gold: #B08D57;
+    --color-dark: #333333;
+    --color-dark-bg: #2A2A2A;
+    --color-off-white: #F8F7F2;
+    --color-light-lime: #F0F3D8;
+    --color-accent: #4A7C59;
+    --color-red: #CC3333;
+    --color-orange: #E8740C;
+    --color-mid-gray: #888888;
+  }
+
+  * { font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", sans-serif; }
+  body { background: var(--color-off-white); color: var(--color-dark); }
+
+  .btn-primary {
+    background: var(--color-lime);
+    color: white;
+    transition: all 0.2s;
+  }
+  .btn-primary:hover:not(:disabled) { background: #8fa028; transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-secondary {
+    background: white;
+    color: var(--color-dark);
+    border: 1.5px solid var(--color-dark);
+  }
+  .btn-secondary:hover { background: var(--color-dark); color: white; }
+
+  .btn-gold {
+    background: var(--color-gold);
+    color: white;
+    transition: all 0.2s;
+  }
+  .btn-gold:hover { background: #96764a; transform: translateY(-1px); }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  .progress-bar {
+    height: 6px;
+    background: #e5e5e5;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--color-lime);
+    transition: width 0.4s ease;
+  }
+
+  .q-radio {
+    position: relative;
+    padding: 14px 12px;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    background: white;
+    font-weight: 500;
+  }
+  .q-radio:hover { border-color: var(--color-lime); background: var(--color-light-lime); }
+  .q-radio.selected {
+    border-color: var(--color-lime);
+    background: var(--color-lime);
+    color: white;
+  }
+  .q-radio input { position: absolute; opacity: 0; pointer-events: none; }
+
+  .rank-badge {
+    display: inline-block;
+    padding: 6px 18px;
+    border-radius: 999px;
+    font-weight: 700;
+    color: white;
+    font-size: 0.9rem;
+  }
+  .rank-S { background: var(--color-lime); }
+  .rank-A { background: var(--color-gold); }
+  .rank-B { background: var(--color-orange); }
+  .rank-C { background: var(--color-red); }
+
+  .score-bar {
+    height: 24px;
+    background: #efefef;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+  }
+  .score-bar-fill {
+    height: 100%;
+    transition: width 0.8s ease;
+    border-radius: 12px;
+  }
+  .score-bar-benchmark {
+    position: absolute;
+    top: -4px;
+    bottom: -4px;
+    width: 2px;
+    background: var(--color-dark);
+    opacity: 0.5;
+  }
+
+  .loader {
+    width: 60px;
+    height: 60px;
+    border: 5px solid var(--color-light-lime);
+    border-top-color: var(--color-lime);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .fade-in { animation: fadeIn 0.4s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  @media print {
+    .no-print { display: none !important; }
+    body { background: white; }
+    .screen { display: none; }
+    .screen.print-active { display: block !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== SCREEN 1: LP ==================== -->
+<section id="screen-lp" class="screen active">
+  <div style="background: var(--color-dark-bg);" class="text-white">
+    <div class="max-w-5xl mx-auto px-6 py-16 md:py-24">
+      <div class="mb-6">
+        <span style="color: var(--color-lime);" class="font-bold tracking-wider text-sm">KATAGRMA × AI</span>
+      </div>
+      <h1 class="text-3xl md:text-5xl font-bold leading-tight mb-6">
+        あなたの施設の<br class="md:hidden" />経営力を、<br />
+        <span style="color: var(--color-lime);">AIが5分で診断</span>します。
+      </h1>
+      <p class="text-base md:text-lg text-gray-300 mb-10 leading-relaxed">
+        全国535施設の運営データに基づき、<br class="md:hidden" />
+        あなたの施設の強みと改善点を可視化。<br />
+        処遇改善加算・採用・人財育成など、<br class="md:hidden" />
+        6つの経営機能を総合評価します。
+      </p>
+      <button onclick="goToScreen('basic-info')" class="btn-primary px-10 py-4 rounded-lg text-lg font-bold shadow-lg">
+        無料で診断を始める →
+      </button>
+      <p class="text-xs text-gray-400 mt-4">所要時間：約5〜10分　｜　完全無料　｜　結果はメールでも受け取れます</p>
+    </div>
+  </div>
+
+  <div class="max-w-5xl mx-auto px-6 py-16">
+    <h2 class="text-2xl md:text-3xl font-bold text-center mb-12">診断の流れ</h2>
+    <div class="grid md:grid-cols-3 gap-6">
+      <div class="bg-white p-6 rounded-xl text-center">
+        <div class="text-4xl mb-3">📝</div>
+        <div class="font-bold mb-2">1. 30問に回答</div>
+        <div class="text-sm text-gray-600">6カテゴリ×5問。5段階で直感的に回答できます。</div>
+      </div>
+      <div class="bg-white p-6 rounded-xl text-center">
+        <div class="text-4xl mb-3">🤖</div>
+        <div class="font-bold mb-2">2. AIが分析</div>
+        <div class="text-sm text-gray-600">535施設のデータと比較し、課題と改善提案を生成。</div>
+      </div>
+      <div class="bg-white p-6 rounded-xl text-center">
+        <div class="text-4xl mb-3">📊</div>
+        <div class="font-bold mb-2">3. 結果レポート</div>
+        <div class="text-sm text-gray-600">レーダーチャート＋AI所見＋具体的な改善提案。</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="background: var(--color-light-lime);">
+    <div class="max-w-5xl mx-auto px-6 py-12 text-center">
+      <p class="text-sm md:text-base" style="color: var(--color-dark);">
+        <strong>株式会社カタグルマ</strong>が提供する、保育施設経営者向けの経営診断ツールです。<br />
+        診断結果をもとに、無料の個別相談もご利用いただけます。
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SCREEN 2: 基本情報 ==================== -->
+<section id="screen-basic-info" class="screen">
+  <div class="max-w-2xl mx-auto px-6 py-12">
+    <button onclick="goToScreen('lp')" class="text-sm text-gray-500 mb-6 hover:text-gray-700">← 戻る</button>
+    <h2 class="text-2xl md:text-3xl font-bold mb-2">基本情報をご入力ください</h2>
+    <p class="text-gray-600 mb-8 text-sm">診断結果をメールでお送りするため、ご入力をお願いします。</p>
+
+    <form id="basic-form" class="space-y-5">
+      <div>
+        <label class="block font-bold mb-2 text-sm">法人名 <span class="text-red-500">*</span></label>
+        <input type="text" name="org_name" required class="w-full p-3 border border-gray-300 rounded-lg focus:border-lime-500 focus:outline-none" placeholder="例：社会福祉法人〇〇会" />
+      </div>
+
+      <div>
+        <label class="block font-bold mb-2 text-sm">法人種別</label>
+        <select name="org_type" class="w-full p-3 border border-gray-300 rounded-lg">
+          <option value="">選択してください</option>
+          <option value="社会福祉法人">社会福祉法人</option>
+          <option value="学校法人">学校法人</option>
+          <option value="株式会社">株式会社</option>
+          <option value="NPO法人">NPO法人</option>
+          <option value="個人事業主">個人事業主</option>
+          <option value="その他">その他</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block font-bold mb-2 text-sm">運営施設数 <span class="text-red-500">*</span></label>
+        <input type="number" name="facility_count" min="1" required class="w-full p-3 border border-gray-300 rounded-lg" placeholder="例：3" />
+      </div>
+
+      <div>
+        <label class="block font-bold mb-2 text-sm">都道府県</label>
+        <input type="text" name="prefecture" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="例：東京都" />
+      </div>
+
+      <hr class="my-6" />
+
+      <div>
+        <label class="block font-bold mb-2 text-sm">回答者お名前 <span class="text-red-500">*</span></label>
+        <input type="text" name="respondent_name" required class="w-full p-3 border border-gray-300 rounded-lg" placeholder="例：山田 太郎" />
+      </div>
+
+      <div>
+        <label class="block font-bold mb-2 text-sm">役職</label>
+        <input type="text" name="respondent_role" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="例：理事長 / 園長" />
+      </div>
+
+      <div>
+        <label class="block font-bold mb-2 text-sm">メールアドレス <span class="text-red-500">*</span></label>
+        <input type="email" name="email" required class="w-full p-3 border border-gray-300 rounded-lg" placeholder="example@example.com" />
+      </div>
+
+      <div>
+        <label class="block font-bold mb-2 text-sm">電話番号</label>
+        <input type="tel" name="phone" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="例：03-1234-5678" />
+      </div>
+
+      <div class="pt-4">
+        <label class="flex items-start gap-2 text-sm">
+          <input type="checkbox" name="privacy" required class="mt-1" />
+          <span>個人情報の取り扱いについて同意します。<br />
+            <span class="text-xs text-gray-500">ご入力情報は診断結果の送付、KatagrMaからの関連情報のご案内に利用します。</span>
+          </span>
+        </label>
+      </div>
+
+      <button type="submit" class="btn-primary w-full py-4 rounded-lg font-bold text-lg mt-6">
+        診断を開始する →
+      </button>
+    </form>
+  </div>
+</section>
+
+<!-- ==================== SCREEN 3: 質問画面 ==================== -->
+<section id="screen-questions" class="screen">
+  <div class="max-w-2xl mx-auto px-6 py-8">
+    <div class="mb-6">
+      <div class="flex justify-between items-center text-sm text-gray-600 mb-2">
+        <span id="category-progress">カテゴリ 1 / 6</span>
+        <span id="overall-progress">0%</span>
+      </div>
+      <div class="progress-bar">
+        <div id="progress-fill" class="progress-bar-fill" style="width: 0%;"></div>
+      </div>
+    </div>
+
+    <div class="mb-8">
+      <div class="flex items-center gap-3 mb-2">
+        <span id="category-icon" class="text-3xl"></span>
+        <h2 id="category-name" class="text-xl md:text-2xl font-bold"></h2>
+      </div>
+      <p class="text-sm text-gray-600">以下の各項目について、あてはまる度合いをお答えください。</p>
+    </div>
+
+    <div id="questions-container" class="space-y-8"></div>
+
+    <div class="flex gap-3 mt-10">
+      <button id="btn-back" onclick="prevCategory()" class="btn-secondary px-6 py-3 rounded-lg font-bold flex-1">
+        ← 戻る
+      </button>
+      <button id="btn-next" onclick="nextCategory()" class="btn-primary px-6 py-3 rounded-lg font-bold flex-1" disabled>
+        次へ →
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SCREEN 4: 分析中 ==================== -->
+<section id="screen-loading" class="screen">
+  <div class="max-w-2xl mx-auto px-6 py-24 text-center">
+    <div class="loader mx-auto mb-8"></div>
+    <h2 class="text-xl md:text-2xl font-bold mb-3">AIが診断結果を分析中...</h2>
+    <p class="text-gray-600" id="loading-message">535施設のデータと比較分析しています</p>
+    <p class="text-xs text-gray-400 mt-8">約10〜15秒お待ちください</p>
+  </div>
+</section>
+
+<!-- ==================== SCREEN 5: 結果 ==================== -->
+<section id="screen-result" class="screen">
+  <div class="max-w-4xl mx-auto px-6 py-10">
+
+    <div class="text-center mb-10 fade-in">
+      <p class="text-sm text-gray-500 mb-2">総合診断スコア</p>
+      <div class="flex items-end justify-center gap-2 mb-3">
+        <span id="total-score" class="text-7xl md:text-8xl font-bold" style="color: var(--color-lime);">0</span>
+        <span class="text-2xl text-gray-500 mb-3">/ 100</span>
+      </div>
+      <span id="rank-badge" class="rank-badge rank-A">A: 標準的</span>
+    </div>
+
+    <div class="bg-white rounded-xl p-6 md:p-8 mb-8 fade-in">
+      <h3 class="text-lg font-bold mb-4">📊 カテゴリ別スコア</h3>
+      <div class="flex flex-col md:flex-row gap-8 items-center">
+        <div class="flex-1 w-full" style="max-width: 400px;">
+          <canvas id="radar-chart"></canvas>
+        </div>
+        <div class="flex-1 w-full space-y-4" id="category-scores"></div>
+      </div>
+      <p class="text-xs text-gray-500 mt-4">※縦線は業界平均スコアを示しています</p>
+    </div>
+
+    <div class="bg-white rounded-xl p-6 md:p-8 mb-8 fade-in">
+      <h3 class="text-lg font-bold mb-4">📝 AI総合所見</h3>
+      <p id="ai-summary" class="text-gray-700 leading-relaxed"></p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mb-8 fade-in">
+      <div class="rounded-xl p-6" style="background: var(--color-light-lime);">
+        <h3 class="font-bold mb-3" style="color: var(--color-accent);">💪 強み</h3>
+        <ul id="strengths-list" class="space-y-2 text-sm"></ul>
+      </div>
+      <div class="rounded-xl p-6" style="background: #FFF4E6;">
+        <h3 class="font-bold mb-3" style="color: var(--color-orange);">⚠️ 主な課題</h3>
+        <ul id="challenges-list" class="space-y-2 text-sm"></ul>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl p-6 md:p-8 mb-10 fade-in">
+      <h3 class="text-lg font-bold mb-4">🎯 改善提案（緊急度順）</h3>
+      <div id="recommendations-list" class="space-y-4"></div>
+    </div>
+
+    <div class="rounded-xl p-6 md:p-8 text-white text-center no-print" style="background: var(--color-dark-bg);">
+      <h3 class="text-xl md:text-2xl font-bold mb-3">
+        この診断結果を、<br class="md:hidden" />次の一手につなげませんか？
+      </h3>
+      <p class="text-gray-300 mb-6 text-sm md:text-base">
+        詳細な改善計画の策定を、KatagrMaの経営アドバイザーが無料でご提案します。<br />
+        （1施設あたり約60分 / Zoom可）
+      </p>
+      <div class="flex flex-col md:flex-row gap-3 justify-center">
+        <button onclick="requestConsultation()" class="btn-primary px-8 py-3 rounded-lg font-bold">
+          無料個別相談を申し込む
+        </button>
+        <button onclick="window.print()" class="btn-gold px-8 py-3 rounded-lg font-bold">
+          結果を印刷 / PDF保存
+        </button>
+      </div>
+      <div class="mt-6 pt-6 border-t border-gray-700">
+        <p class="text-xs text-gray-400 mb-3">診断結果をシェアする</p>
+        <div class="flex gap-3 justify-center">
+          <button onclick="shareResult('twitter')" class="btn-secondary px-4 py-2 rounded text-sm">Xでシェア</button>
+          <button onclick="shareResult('line')" class="btn-secondary px-4 py-2 rounded text-sm">LINEでシェア</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<script>
+// =====================================================================
+// データ定義（質問・カテゴリ）
+// プレースホルダー：本番リリース前に大嶽CEO監修で差し替え
+// =====================================================================
+const CATEGORIES = [
+  {
+    id: "talent_dev",
+    name: "人財育成・評価",
+    icon: "🌱",
+    questions: [
+      "職員の育成計画が文書化され、定期的に振り返りが行われている",
+      "人事評価の基準が全職員に共有され、納得感がある",
+      "面談（1on1）が定期的に実施され、記録が蓄積されている",
+      "研修の受講履歴が管理され、次の研修計画に活かされている",
+      "キャリアパスが明確で、職員が将来像を描ける仕組みがある"
+    ]
+  },
+  {
+    id: "recruitment",
+    name: "採用・人員確保",
+    icon: "🤝",
+    questions: [
+      "複数の採用チャネル（ハローワーク、紹介会社、SNS、リファラル等）を活用できている",
+      "職員の充足率が年間を通じて安定している",
+      "採用プロセス（応募→面接→内定）が標準化されている",
+      "離職率が業界平均以下で推移している",
+      "次年度の採用計画が具体的な数値目標とともに策定されている"
+    ]
+  },
+  {
+    id: "labor_mgmt",
+    name: "労務・制度対応",
+    icon: "📋",
+    questions: [
+      "処遇改善等加算の報告書類作成が効率的に行えている",
+      "監査対応の書類準備に十分な余裕がある",
+      "シフト管理がシステム化され、急な欠員にも対応できる",
+      "給与・賞与の決定プロセスが透明で、根拠が明確である",
+      "行政への各種届出・報告がスムーズに行えている"
+    ]
+  },
+  {
+    id: "org_mgmt",
+    name: "組織マネジメント",
+    icon: "🏛️",
+    questions: [
+      "園長・主任の役割分担が明確で、過度な事務負荷が生じていない",
+      "施設間・職員間の情報共有の仕組みが整備されている",
+      "経営層と現場の意思疎通が円滑に行われている",
+      "会議体（運営会議・現場会議）の運営が効率的である",
+      "新しい施策や改善提案が現場から上がりやすい風土がある"
+    ]
+  },
+  {
+    id: "finance",
+    name: "財務・経営戦略",
+    icon: "💹",
+    questions: [
+      "月次の収支状況をタイムリーに把握できている",
+      "施設別の損益が可視化され、経営判断に活用されている",
+      "補助金・加算の活用について最新情報を把握し最大化できている",
+      "中期経営計画が策定され、定期的に見直されている",
+      "資金繰りに余裕があり、計画的な投資判断ができている"
+    ]
+  },
+  {
+    id: "community",
+    name: "保護者・地域連携",
+    icon: "👪",
+    questions: [
+      "保護者との日常的なコミュニケーション手段（連絡帳・アプリ等）が確立されている",
+      "保護者満足度を定期的に把握する仕組みがある",
+      "入園希望者の集客経路が多様化している",
+      "地域との連携（自治体・他施設・地域住民）が積極的に行われている",
+      "施設の情報発信（Web・SNS）が計画的に行われている"
+    ]
+  }
+];
+
+// 業界平均ベンチマーク（推定値。535施設データ確定後に差し替え）
+const BENCHMARKS = {
+  talent_dev: 52,
+  recruitment: 38,
+  labor_mgmt: 45,
+  org_mgmt: 48,
+  finance: 42,
+  community: 55
+};
+
+// 加重配分（施設規模別）
+const WEIGHTS = {
+  smb: { talent_dev: 0.20, recruitment: 0.20, labor_mgmt: 0.15, org_mgmt: 0.20, finance: 0.10, community: 0.15 },
+  mm:  { talent_dev: 0.20, recruitment: 0.15, labor_mgmt: 0.15, org_mgmt: 0.20, finance: 0.15, community: 0.15 },
+  gb:  { talent_dev: 0.15, recruitment: 0.15, labor_mgmt: 0.20, org_mgmt: 0.20, finance: 0.15, community: 0.15 },
+  ent: { talent_dev: 0.15, recruitment: 0.10, labor_mgmt: 0.20, org_mgmt: 0.25, finance: 0.20, community: 0.10 }
+};
+
+const LIKERT = ["まったく<br/>当てはまらない", "あまり<br/>当てはまらない", "どちらとも<br/>いえない", "やや<br/>当てはまる", "非常に<br/>よく当てはまる"];
+
+// =====================================================================
+// 状態
+// =====================================================================
+const state = {
+  basicInfo: {},
+  currentCategoryIndex: 0,
+  answers: {},
+  scores: {},
+  analysis: null
+};
+
+// UTMパラメータ取得
+function captureUTM() {
+  const params = new URLSearchParams(window.location.search);
+  return {
+    utm_source: params.get("utm_source") || "",
+    utm_medium: params.get("utm_medium") || "",
+    utm_campaign: params.get("utm_campaign") || ""
+  };
+}
+
+// =====================================================================
+// 画面遷移
+// =====================================================================
+function goToScreen(name) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  const map = {
+    "lp": "screen-lp",
+    "basic-info": "screen-basic-info",
+    "questions": "screen-questions",
+    "loading": "screen-loading",
+    "result": "screen-result"
+  };
+  document.getElementById(map[name]).classList.add("active");
+  window.scrollTo(0, 0);
+}
+
+// =====================================================================
+// 基本情報フォーム
+// =====================================================================
+document.getElementById("basic-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const formData = new FormData(e.target);
+  state.basicInfo = Object.fromEntries(formData.entries());
+  state.basicInfo = { ...state.basicInfo, ...captureUTM() };
+  state.currentCategoryIndex = 0;
+  renderCategory();
+  goToScreen("questions");
+});
+
+// =====================================================================
+// 質問画面
+// =====================================================================
+function renderCategory() {
+  const idx = state.currentCategoryIndex;
+  const category = CATEGORIES[idx];
+
+  document.getElementById("category-progress").textContent = `カテゴリ ${idx + 1} / ${CATEGORIES.length}`;
+  document.getElementById("category-icon").textContent = category.icon;
+  document.getElementById("category-name").textContent = category.name;
+
+  const totalQuestions = CATEGORIES.length * 5;
+  const answered = Object.keys(state.answers).length;
+  document.getElementById("overall-progress").textContent = `${Math.round((answered / totalQuestions) * 100)}%`;
+  document.getElementById("progress-fill").style.width = `${((idx) / CATEGORIES.length) * 100}%`;
+
+  const container = document.getElementById("questions-container");
+  container.innerHTML = category.questions.map((q, qIdx) => {
+    const key = `${category.id}_${qIdx + 1}`;
+    const current = state.answers[key];
+    return `
+      <div class="bg-white rounded-xl p-5 border border-gray-100">
+        <p class="font-bold mb-4 text-sm md:text-base leading-relaxed">
+          <span style="color: var(--color-lime);">Q${qIdx + 1}.</span> ${q}
+        </p>
+        <div class="grid grid-cols-5 gap-2">
+          ${[1,2,3,4,5].map(v => `
+            <label class="q-radio ${current === v ? 'selected' : ''}" data-key="${key}" data-value="${v}">
+              <input type="radio" name="${key}" value="${v}" ${current === v ? 'checked' : ''} />
+              <div class="text-lg font-bold">${v}</div>
+              <div class="text-[10px] md:text-xs mt-1 leading-tight">${LIKERT[v-1]}</div>
+            </label>
+          `).join("")}
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  // ラジオボタンクリックハンドラ
+  container.querySelectorAll(".q-radio").forEach(el => {
+    el.addEventListener("click", () => {
+      const key = el.dataset.key;
+      const value = parseInt(el.dataset.value);
+      state.answers[key] = value;
+      // 同じ質問グループのselected状態を更新
+      container.querySelectorAll(`[data-key="${key}"]`).forEach(sib => sib.classList.remove("selected"));
+      el.classList.add("selected");
+      updateNextButton();
+    });
+  });
+
+  // 戻るボタン
+  document.getElementById("btn-back").style.visibility = idx === 0 ? "hidden" : "visible";
+  document.getElementById("btn-next").textContent = idx === CATEGORIES.length - 1 ? "診断結果を見る →" : "次へ →";
+  updateNextButton();
+}
+
+function updateNextButton() {
+  const category = CATEGORIES[state.currentCategoryIndex];
+  const allAnswered = category.questions.every((_, qIdx) =>
+    state.answers[`${category.id}_${qIdx + 1}`] !== undefined
+  );
+  document.getElementById("btn-next").disabled = !allAnswered;
+}
+
+function nextCategory() {
+  if (state.currentCategoryIndex < CATEGORIES.length - 1) {
+    state.currentCategoryIndex++;
+    renderCategory();
+  } else {
+    // 診断完了
+    runAnalysis();
+  }
+}
+
+function prevCategory() {
+  if (state.currentCategoryIndex > 0) {
+    state.currentCategoryIndex--;
+    renderCategory();
+  }
+}
+
+// =====================================================================
+// スコア計算
+// =====================================================================
+function getWeightTier(facilityCount) {
+  const n = parseInt(facilityCount) || 1;
+  if (n <= 3) return "smb";
+  if (n <= 10) return "mm";
+  if (n <= 30) return "gb";
+  return "ent";
+}
+
+function calculateScores() {
+  const scores = {};
+  CATEGORIES.forEach(cat => {
+    const sum = cat.questions.reduce((acc, _, i) => acc + (state.answers[`${cat.id}_${i+1}`] || 0), 0);
+    scores[cat.id] = Math.round((sum / 25) * 100);
+  });
+
+  const tier = getWeightTier(state.basicInfo.facility_count);
+  const weights = WEIGHTS[tier];
+  const total = Math.round(
+    Object.keys(weights).reduce((acc, k) => acc + scores[k] * weights[k], 0)
+  );
+
+  let rank, rankLabel;
+  if (total >= 80) { rank = "S"; rankLabel = "優良経営"; }
+  else if (total >= 60) { rank = "A"; rankLabel = "標準的"; }
+  else if (total >= 40) { rank = "B"; rankLabel = "要改善"; }
+  else { rank = "C"; rankLabel = "要緊急対応"; }
+
+  return { ...scores, total, rank, rankLabel };
+}
+
+// =====================================================================
+// AI分析 — サーバー /api/analyze を呼び出し、失敗時はルールベースにフォールバック
+// =====================================================================
+async function runAnalysis() {
+  goToScreen("loading");
+
+  state.scores = calculateScores();
+
+  const messages = [
+    "535施設のデータと比較分析しています",
+    "カテゴリごとの課題を抽出しています",
+    "具体的な改善提案を生成しています",
+    "レポートを最終調整しています"
+  ];
+  let msgIdx = 0;
+  const msgInterval = setInterval(() => {
+    msgIdx = (msgIdx + 1) % messages.length;
+    document.getElementById("loading-message").textContent = messages[msgIdx];
+  }, 2500);
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
+    const response = await fetch("/api/analyze", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        scores: state.scores,
+        facility_count: state.basicInfo.facility_count,
+        org_type: state.basicInfo.org_type,
+        prefecture: state.basicInfo.prefecture
+      }),
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    if (!response.ok) throw new Error(`API returned ${response.status}`);
+    state.analysis = await response.json();
+    console.log("[AI分析] サーバー経由で生成");
+  } catch (err) {
+    console.warn("[AI分析] APIフォールバック発動（ルールベースで代替）:", err.message);
+    await new Promise(r => setTimeout(r, 2000));
+    state.analysis = generateRuleBasedAnalysis(state.scores);
+  }
+
+  clearInterval(msgInterval);
+
+  saveDiagnosis();
+  renderResult();
+  goToScreen("result");
+}
+
+function generateRuleBasedAnalysis(scores) {
+  const categoryNames = Object.fromEntries(CATEGORIES.map(c => [c.id, c.name]));
+  const entries = CATEGORIES.map(c => ({ id: c.id, name: c.name, score: scores[c.id] }));
+
+  const sorted = [...entries].sort((a, b) => b.score - a.score);
+  const strengths = sorted.slice(0, 2).filter(e => e.score >= 60);
+  const challenges = sorted.slice(-3).reverse();
+
+  // サマリー
+  let summary;
+  if (scores.total >= 80) {
+    summary = `総合スコア${scores.total}点と、極めて優良な経営状態です。特に${sorted[0].name}・${sorted[1].name}の領域は業界内でも高い水準にあります。さらなる成長に向け、課題領域への投資判断を検討する段階と言えるでしょう。`;
+  } else if (scores.total >= 60) {
+    summary = `総合スコア${scores.total}点と、保育業界における標準的な経営状態です。${sorted[0].name}に強みを持つ一方、${challenges[0].name}の領域には改善余地が見られます。優先度の高い課題から取り組むことで、ワンランク上の経営体制を構築できます。`;
+  } else if (scores.total >= 40) {
+    summary = `総合スコア${scores.total}点。現場は機能していますが、経営機能の整備に改善余地が見られます。特に${challenges[0].name}・${challenges[1].name}の2領域は優先的な対応が必要です。いずれも単独での解決が難しい領域のため、外部専門家との連携をお勧めします。`;
+  } else {
+    summary = `総合スコア${scores.total}点。複数の経営領域で緊急の対応が求められる状態です。${challenges[0].name}をはじめとする課題は、放置すると職員定着・園児募集・財務健全性に影響します。早期の外部支援導入を強くお勧めします。`;
+  }
+
+  // 強み
+  const strengthItems = strengths.length > 0
+    ? strengths.map(s => `${s.name}（${s.score}点）— 業界平均${BENCHMARKS[s.id]}点を上回る水準`)
+    : ["現時点で業界平均を明確に上回るカテゴリはありませんが、診断を受けて現状を可視化したこと自体が改善への第一歩です"];
+
+  // 課題
+  const challengeItems = challenges.map(c => {
+    const gap = c.score - BENCHMARKS[c.id];
+    const gapText = gap >= 0 ? `業界平均並み` : `業界平均を${Math.abs(gap)}点下回る`;
+    return `${c.name}（${c.score}点）— ${gapText}`;
+  });
+
+  // 改善提案（緊急度順）
+  const recommendationTemplates = {
+    talent_dev: {
+      action: "人事評価制度の棚卸しとキャリアパスの可視化。まずは現行の評価シートをExcel1枚で再整理し、3つの等級・5つの評価軸に集約することから着手。",
+      impact: "職員の納得感向上による離職率低下（想定 -3pt）、評価面談工数の削減"
+    },
+    recruitment: {
+      action: "採用チャネルのポートフォリオ再設計。ハローワーク一辺倒から、SNS採用・リファラル制度・保育学生向けインターン導入へと多角化。",
+      impact: "年間採用コストの最適化、充足率の通年安定化"
+    },
+    labor_mgmt: {
+      action: "処遇改善等加算の書類作成・監査対応のBPO化検討。社内工数を月20時間以上削減し、園長を本来業務に集中させる。",
+      impact: "園長の事務負荷-20h/月、加算取りこぼしの防止"
+    },
+    org_mgmt: {
+      action: "園長と主任の役割分担マトリクス再設計、月次運営会議の議題テンプレート化。情報共有のためのクラウドツール導入も検討。",
+      impact: "意思決定スピード向上、施設間のばらつき減少"
+    },
+    finance: {
+      action: "施設別損益のダッシュボード化と、月次経営レビュー会議の設置。補助金・加算の最新制度チェックリストを四半期更新。",
+      impact: "収益機会の取りこぼし防止、経営判断の迅速化"
+    },
+    community: {
+      action: "保護者コミュニケーションアプリの導入、保護者満足度アンケートの定期実施、Web・SNSを活用した情報発信の計画化。",
+      impact: "保護者満足度向上、園児募集の安定化、口コミ経由応募の増加"
+    }
+  };
+
+  const recommendations = challenges.map((c, i) => ({
+    category: c.name,
+    action: recommendationTemplates[c.id].action,
+    impact: recommendationTemplates[c.id].impact,
+    urgency: i === 0 ? "high" : i === 1 ? "medium" : "low"
+  }));
+
+  return {
+    summary,
+    strengths: strengthItems,
+    challenges: challengeItems,
+    recommendations,
+    benchmark_comment: `施設数${state.basicInfo.facility_count}施設の規模感では、${challenges[0].name}の強化が最もレバレッジが効く傾向にあります。`
+  };
+}
+
+// =====================================================================
+// 結果画面レンダリング
+// =====================================================================
+function renderResult() {
+  const s = state.scores;
+  const a = state.analysis;
+
+  // 総合スコア
+  animateNumber("total-score", 0, s.total, 1200);
+
+  // ランクバッジ
+  const rankBadge = document.getElementById("rank-badge");
+  rankBadge.textContent = `${s.rank}: ${s.rankLabel}`;
+  rankBadge.className = `rank-badge rank-${s.rank}`;
+
+  // カテゴリ別スコア（右カラム）
+  document.getElementById("category-scores").innerHTML = CATEGORIES.map(cat => {
+    const score = s[cat.id];
+    const benchmark = BENCHMARKS[cat.id];
+    const color = score >= 80 ? "var(--color-lime)" :
+                  score >= 60 ? "var(--color-gold)" :
+                  score >= 40 ? "var(--color-orange)" : "var(--color-red)";
+    return `
+      <div>
+        <div class="flex justify-between text-sm mb-1.5">
+          <span class="font-bold">${cat.icon} ${cat.name}</span>
+          <span>
+            <span class="font-bold">${score}</span>
+            <span class="text-xs text-gray-500">/ 業界平均 ${benchmark}</span>
+          </span>
+        </div>
+        <div class="score-bar">
+          <div class="score-bar-fill" style="width: ${score}%; background: ${color};"></div>
+          <div class="score-bar-benchmark" style="left: ${benchmark}%;"></div>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  // レーダーチャート
+  renderRadarChart();
+
+  // AI所見
+  document.getElementById("ai-summary").textContent = a.summary;
+
+  // 強み
+  document.getElementById("strengths-list").innerHTML = a.strengths.map(s =>
+    `<li class="flex items-start gap-2"><span>✓</span><span>${s}</span></li>`
+  ).join("");
+
+  // 課題
+  document.getElementById("challenges-list").innerHTML = a.challenges.map(c =>
+    `<li class="flex items-start gap-2"><span>!</span><span>${c}</span></li>`
+  ).join("");
+
+  // 改善提案
+  const urgencyMap = {
+    high: { label: "緊急度 高", color: "#CC3333" },
+    medium: { label: "緊急度 中", color: "#E8740C" },
+    low: { label: "緊急度 低", color: "#B08D57" }
+  };
+  document.getElementById("recommendations-list").innerHTML = a.recommendations.map((r, i) => `
+    <div class="border-l-4 pl-4 py-2" style="border-color: ${urgencyMap[r.urgency].color};">
+      <div class="flex items-center gap-2 mb-2 flex-wrap">
+        <span class="text-xs font-bold px-2 py-0.5 rounded" style="background: ${urgencyMap[r.urgency].color}; color: white;">
+          ${urgencyMap[r.urgency].label}
+        </span>
+        <span class="font-bold text-sm">${r.category}</span>
+      </div>
+      <p class="text-sm leading-relaxed mb-2">${r.action}</p>
+      <p class="text-xs text-gray-500"><strong>期待効果：</strong>${r.impact}</p>
+    </div>
+  `).join("");
+}
+
+function renderRadarChart() {
+  const ctx = document.getElementById("radar-chart").getContext("2d");
+  new Chart(ctx, {
+    type: "radar",
+    data: {
+      labels: CATEGORIES.map(c => c.name),
+      datasets: [
+        {
+          label: "あなたの施設",
+          data: CATEGORIES.map(c => state.scores[c.id]),
+          backgroundColor: "rgba(165, 184, 48, 0.3)",
+          borderColor: "#A5B830",
+          borderWidth: 2,
+          pointBackgroundColor: "#A5B830"
+        },
+        {
+          label: "業界平均",
+          data: CATEGORIES.map(c => BENCHMARKS[c.id]),
+          backgroundColor: "rgba(136, 136, 136, 0.1)",
+          borderColor: "#888",
+          borderWidth: 1,
+          borderDash: [5, 5],
+          pointBackgroundColor: "#888",
+          pointRadius: 2
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        r: {
+          min: 0, max: 100,
+          ticks: { stepSize: 20, font: { size: 10 } },
+          pointLabels: { font: { size: 11, weight: "bold" } }
+        }
+      },
+      plugins: {
+        legend: { position: "bottom", labels: { font: { size: 11 } } }
+      }
+    }
+  });
+}
+
+function animateNumber(elId, from, to, duration) {
+  const el = document.getElementById(elId);
+  const start = performance.now();
+  function step(now) {
+    const progress = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    el.textContent = Math.round(from + (to - from) * eased);
+    if (progress < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+// =====================================================================
+// データ保存 — サーバーに POST。サーバーがSQLite + Zoho + メール配信を行う
+// =====================================================================
+async function saveDiagnosis() {
+  const payload = {
+    ...state.basicInfo,
+    scores: state.scores,
+    answers: state.answers,
+    analysis: state.analysis
+  };
+
+  // ローカルバックアップ（オフラインでも履歴は残す）
+  const history = JSON.parse(localStorage.getItem("shindan_history") || "[]");
+  history.push({ created_at: new Date().toISOString(), ...payload });
+  localStorage.setItem("shindan_history", JSON.stringify(history));
+
+  try {
+    const resp = await fetch("/api/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    if (!resp.ok) throw new Error(`API returned ${resp.status}`);
+    const result = await resp.json();
+    state.diagnosisId = result.id;
+    console.log("[診断結果保存] id=" + result.id);
+  } catch (err) {
+    console.warn("[診断結果保存] サーバー保存失敗（ローカルのみ保存）:", err.message);
+  }
+}
+
+// =====================================================================
+// CTA — 個別相談申込
+// =====================================================================
+async function requestConsultation() {
+  if (!state.diagnosisId) {
+    alert("診断データの保存中です。少し待ってから再度お試しください。");
+    return;
+  }
+
+  const btn = event.currentTarget;
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "送信中...";
+
+  try {
+    const resp = await fetch("/api/consultation", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: state.diagnosisId })
+    });
+    if (!resp.ok) throw new Error(`API returned ${resp.status}`);
+    showConsultationConfirmation();
+  } catch (err) {
+    console.error("[個別相談] エラー:", err);
+    alert("申込の送信に失敗しました。お手数ですが時間を置いて再度お試しください。");
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
+}
+
+function showConsultationConfirmation() {
+  const overlay = document.createElement("div");
+  overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px;";
+  overlay.innerHTML = `
+    <div style="background:white;padding:32px;border-radius:16px;max-width:480px;text-align:center;">
+      <div style="font-size:48px;margin-bottom:12px;">🎉</div>
+      <h3 style="font-size:20px;font-weight:bold;margin-bottom:12px;">お申込みありがとうございます</h3>
+      <p style="color:#666;font-size:14px;line-height:1.7;margin-bottom:24px;">
+        担当者より1〜2営業日以内にご連絡いたします。<br/>
+        ご登録メールアドレス宛に確認メールもお送りしました。
+      </p>
+      <button onclick="this.closest('div[style*=fixed]').remove()" class="btn-primary" style="padding:12px 32px;border-radius:8px;font-weight:bold;border:none;cursor:pointer;">閉じる</button>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+function shareResult(platform) {
+  const text = `KatagrMaの保育経営診断を受けました。総合スコア ${state.scores.total}/100 (${state.scores.rank}ランク)`;
+  const url = window.location.origin + window.location.pathname;
+  const urls = {
+    twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
+    line: `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`
+  };
+  window.open(urls[platform], "_blank", "width=600,height=400");
+}
+
+// =====================================================================
+// 開発用：URL に ?debug=1 をつけると質問をすべて自動回答
+// =====================================================================
+if (new URLSearchParams(window.location.search).get("debug") === "1") {
+  window.fillDebug = () => {
+    CATEGORIES.forEach(c => {
+      c.questions.forEach((_, i) => {
+        state.answers[`${c.id}_${i+1}`] = Math.floor(Math.random() * 5) + 1;
+      });
+    });
+    alert("デバッグ回答を充填しました。基本情報を入力して診断開始してください。");
+  };
+  console.log("[DEBUG] window.fillDebug() でランダム回答を充填できます");
+}
+</script>
+
+</body>
+</html>

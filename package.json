@@ -1,0 +1,20 @@
+{
+  "name": "katagrma-shindan",
+  "version": "0.1.0",
+  "description": "保育経営診断ツール — KatagrMa Beyond SaaS",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.88.0",
+    "better-sqlite3": "^12.9.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
